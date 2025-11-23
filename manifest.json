@@ -1,0 +1,16 @@
+{
+  "name": "Diario de Trading - Registro",
+  "short_name": "Diario Trading",
+  "description": "Herramienta para registrar análisis y operaciones de trading.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#1f2937",
+  "theme_color": "#4a90e2",
+  "icons": [
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
