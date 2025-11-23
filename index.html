@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diario de Trading Completo</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            color: #1f2937;
+        }
+        .card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .input-style {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .input-style:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+        .btn-green {
+            background-color: #10b981;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .btn-green:hover {
+            background-color: #059669;
+        }
+        .btn-blue {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .btn-blue:hover {
+            background-color: #2563eb;
+        }
+        .section-title {
+            color: #3b82f6;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #eff6ff;
+            padding-bottom: 0.5rem;
+        }
+        /* Mobile optimization for checklist */
+        .checklist-item-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+        @media (min-width: 768px) {
+            .checklist-item-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">📊 Diario de Trading - Planificación y Ejecución</h1>
+
+    <!-- Balance and User ID Display -->
+    <div class="card bg-indigo-50 border-4 border-indigo-200">
+        <div class="flex flex-wrap justify-between items-center">
+            <div class="mb-4 md:mb-0">
+                <p class="text-lg font-semibold text-indigo-700">Usuario (ID):</p>
+                <code id="userIdDisplay" class="text-sm font-mono text-indigo-600 bg-indigo-100 p-1 rounded">Cargando...</code>
+            </div>
+        </div>
+        <div class="flex flex-wrap justify-between items-center mt-4 pt-4 border-t border-indigo-200">
+            <div class="w-full md:w-1/2 mb-4 md:mb-0">
+                <label for="initialCapitalInput" class="block text-sm font-semibold text-indigo-700 mb-1">Capital Inicial (USD)</label>
+                <input type="number" id="initialCapitalInput" placeholder="Ej: 1000.00" step="0.01" value="0.00"
+                       class="input-style text-lg text-gray-800 bg-indigo-100/50" onchange="saveInitialCapital(this.value)">
+            </div>
+            <div class="text-right w-full md:w-1/2">
+                <p class="text-2xl font-bold text-gray-800">Balance Total:</p>
+                <p id="totalBalance" class="text-4xl font-extrabold text-green-600">$0.00</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Box -->
+    <div id="messageBox" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl flex flex-col items-center max-w-sm w-full">
+            <div id="spinner" class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
+            <p id="messageText" class="text-lg font-medium text-gray-700 text-center"></p>
+            <button id="messageCloseButton" class="mt-4 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hidden" onclick="hideMessage()">Cerrar</button>
+        </div>
+    </div>
+    
+    <!-- 1. FORMULARIO DE PLAN PRE-MARKET (VISIBLE POR DEFECTO) -->
+    <form id="premarketForm" class="card">
+        <h2 class="section-title">1. Registrar Plan Pre-Market</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label for="planDate" class="block font-medium mb-1">Fecha</label>
+                <input type="date" id="planDate" required class="input-style" value="">
+            </div>
+            <div>
+                <label for="planAsset" class="block font-medium mb-1">Activo / Par</label>
+                <input type="text" id="planAsset" required placeholder="Ej: NASDAQ, EUR/USD" class="input-style">
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label for="planPossibleZones" class="block font-medium mb-1">Análisis / Posibles Zonas de Interés (POI)</label>
+            <textarea id="planPossibleZones" rows="3" placeholder="Detalle la estructura, la dirección y los niveles clave para operar..." class="input-style" required></textarea>
+        </div>
+
+        <div class="mb-6">
+            <label for="planMarketImage" class="block font-medium mb-1">Subir Captura del Análisis (Máx 1MB)</label>
+            <input type="file" id="planMarketImage" accept="image/*" class="w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-indigo-50 file:text-indigo-700
+                hover:file:bg-indigo-100
+            "/>
+            <p class="text-xs text-red-500 mt-1">La imagen se guarda en la base de datos (Base64). ¡Use solo gráficos de bajo peso!</p>
+        </div>
+
+        <button type="submit" class="btn-green w-full shadow-lg shadow-green-500/50">
+            Guardar Plan (Pendiente de Ejecución)
+        </button>
+    </form>
+
+    <!-- 2. FORMULARIO DE EJECUCIÓN (OCULTO INICIALMENTE) -->
+    <div id="executionSection" class="card hidden">
+        <h2 class="section-title">2. Ejecución y Resultados</h2>
+        <div id="executionHeader" class="p-3 mb-4 bg-yellow-50 border-l-4 border-yellow-500 text-gray-700">
+            <p class="text-lg font-bold">Cerrando la operación para: <span id="executingTradeAsset"></span></p>
+            <p class="text-sm">Plan del: <span id="executingTradeDate"></span></p>
+        </div>
+
+        <form id="executionForm" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Checklist y Observaciones -->
+            <div class="lg:col-span-1 space-y-4">
+                <h3 class="text-lg font-semibold text-gray-700">Checklist de Ejecución</h3>
+                <div id="checklist-container" class="space-y-4">
+                    <!-- Checklist items will be rendered here -->
+                </div>
+                
+                <!-- 3. CUADRO DE OBSERVACIONES -->
+                <div class="mt-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Observaciones / Psicología</h3>
+                    <textarea id="execObservations" rows="4" placeholder="Anote aquí sus sentimientos, errores, sesgos o lecciones aprendidas de la operación." class="input-style"></textarea>
+                </div>
+            </div>
+
+            <!-- Gestión y Submit -->
+            <div class="lg:col-span-1 space-y-4">
+                <h3 class="text-lg font-semibold text-gray-700">Gestión y Resultados</h3>
+
+                <div class="mb-4">
+                    <label for="execCapitalInvested" class="block font-medium mb-1">Capital/Riesgo Invertido (USD)</label>
+                    <input type="number" id="execCapitalInvested" required placeholder="Ej: 100.00" step="0.01" class="input-style">
+                </div>
+
+                <div class="mb-4">
+                    <label for="execResultType" class="block font-medium mb-1">Resultado</label>
+                    <select id="execResultType" required class="input-style">
+                        <option value="">Seleccione el resultado</option>
+                        <option value="TP">Take Profit (Ganancia)</option>
+                        <option value="SL">Stop Loss (Pérdida)</option>
+                        <option value="BE">Breakeven (Cerrado en Cero)</option>
+                    </select>
+                </div>
+
+                <div id="execProfitLossContainer" class="mb-6 hidden">
+                    <label for="execProfitLossAmount" class="block font-medium mb-1">Monto de Ganancia/Pérdida (USD)</label>
+                    <input type="number" id="execProfitLossAmount" placeholder="Monto final (+ para ganancia, - para pérdida)" step="0.01" class="input-style">
+                </div>
+
+                <!-- NEW: Execution Image Upload -->
+                <div class="mb-4 lg:col-span-2">
+                    <label for="execMarketImage" class="block font-medium mb-1">Subir Captura del Resultado/Cierre (Máx 1MB)</label>
+                    <input type="file" id="execMarketImage" accept="image/*" class="w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-indigo-50 file:text-indigo-700
+                        hover:file:bg-indigo-100
+                    "/>
+                    <p class="text-xs text-red-500 mt-1">La imagen se guarda en la base de datos (Base64). ¡Use solo gráficos de bajo peso!</p>
+                </div>
+                
+                <button type="button" id="cancelExecutionButton" class="w-full bg-gray-500 text-white font-semibold py-2 rounded-lg hover:bg-gray-600 transition">
+                    Cancelar / Volver a Planes
+                </button>
+
+                <button type="submit" class="btn-blue w-full shadow-lg shadow-blue-500/50">
+                    Cerrar Operación y Registrar Resultado
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Historial de Operaciones -->
+    <div class="card mt-6">
+        <h2 class="section-title">Historial de Operaciones</h2>
+        
+        <!-- Planes Pendientes -->
+        <h3 class="text-xl font-semibold text-yellow-700 mb-3 border-b pb-2">Planes Pendientes de Ejecución</h3>
+        <div id="pendingLogsContainer" class="space-y-4 mb-6">
+            <p class="text-gray-500 text-center" id="pendingEmptyMessage">No hay planes pendientes. ¡Crea uno!</p>
+        </div>
+
+        <!-- Operaciones Cerradas -->
+        <h3 class="text-xl font-semibold text-green-700 mb-3 border-b pb-2 pt-4">Operaciones Cerradas (Historial)</h3>
+        <div id="closedLogsContainer" class="space-y-4">
+            <p class="text-gray-500 text-center" id="closedEmptyMessage">Cargando registros o no hay operaciones cerradas.</p>
+        </div>
+    </div>
+    
+    <!-- Template for checklist items -->
+    <template id="checklistTemplate">
+        <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <label class="flex items-center space-x-3 cursor-pointer">
+                <input type="checkbox" name="checkItem" class="check-box-input form-checkbox h-5 w-5 text-blue-600 rounded">
+                <span class="text-base font-medium check-label-text"></span>
+            </label>
+            <textarea rows="1" placeholder="Notas sobre este punto..." class="input-style mt-2 check-notes"></textarea>
+        </div>
+    </template>
+
+
+    <!-- Firebase Setup and Script -->
+    <script type="module">
+        // Importaciones de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // Añadimos setDoc y deleteDoc a las importaciones
+        import { getFirestore, doc, addDoc, onSnapshot, collection, serverTimestamp, updateDoc, setLogLevel, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase and App
+        let db, auth, userId = null;
+        const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const FIREBASE_CONFIG = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+
+        let currentExecutionTradeId = null; // ID del plan que se está ejecutando
+        let initialCapital = 0; // NEW: Global variable for initial capital
+        let currentLogs = []; // NEW: Global variable to hold current logs
+
+        // Checklist items definition
+        const CHECKLIST_ITEMS = [
+            "Estuvo en una Zona de Interés (POI)?",
+            "Estuvo en una Killzone (Horario óptimo)?",
+            "Hubo Divergencia o Confluencia (Indicadores/Multi-timeframe)?",
+            "Hubo Dirección Clara (Tendencia, Sesgo)?",
+            "Hubo Confirmación Clara (Estructura, Patrón)?",
+        ];
+
+        // UI Elements
+        const premarketForm = document.getElementById('premarketForm');
+        const executionForm = document.getElementById('executionForm');
+        const executionSection = document.getElementById('executionSection');
+        const pendingLogsContainer = document.getElementById('pendingLogsContainer');
+        const closedLogsContainer = document.getElementById('closedLogsContainer');
+        const totalBalanceDisplay = document.getElementById('totalBalance');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const pendingEmptyMessage = document.getElementById('pendingEmptyMessage');
+        const closedEmptyMessage = document.getElementById('closedEmptyMessage');
+        const checklistContainer = document.getElementById('checklist-container');
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const messageCloseButton = document.getElementById('messageCloseButton');
+
+        const execResultTypeSelect = document.getElementById('execResultType');
+        const execProfitLossContainer = document.getElementById('execProfitLossContainer');
+        const execProfitLossAmountInput = document.getElementById('execProfitLossAmount');
+        const executingTradeAsset = document.getElementById('executingTradeAsset');
+        const executingTradeDate = document.getElementById('executingTradeDate');
+        const initialCapitalInput = document.getElementById('initialCapitalInput');
+
+
+        // --- Utility Functions ---
+
+        /** Toggles the display of the Profit/Loss amount input based on the result type. */
+        execResultTypeSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'TP' || e.target.value === 'SL') {
+                execProfitLossContainer.classList.remove('hidden');
+                execProfitLossAmountInput.setAttribute('required', 'required');
+            } else {
+                execProfitLossContainer.classList.add('hidden');
+                execProfitLossAmountInput.removeAttribute('required');
+                execProfitLossAmountInput.value = ''; // Clear value for BE
+            }
+        });
+
+        /** Populates the checklist section from the defined list. */
+        function createChecklistUI() {
+            const template = document.getElementById('checklistTemplate');
+            CHECKLIST_ITEMS.forEach((item, index) => {
+                const clone = template.content.cloneNode(true);
+                const checkbox = clone.querySelector('.check-box-input');
+                const label = clone.querySelector('.check-label-text');
+                const notes = clone.querySelector('.check-notes');
+
+                checkbox.id = `checkItem-${index}`;
+                checkbox.value = item;
+                label.textContent = item;
+                notes.id = `checkNotes-${index}`;
+                notes.setAttribute('data-item', item);
+                notes.placeholder = `Notas sobre: ${item.replace('?', '')}...`;
+                checklistContainer.appendChild(clone);
+            });
+        }
+
+        /** Converts a File object to a Base64 string. */
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) return resolve(null);
+                const reader = new FileReader();
+                // Check file size (max 1MB for safety)
+                if (file.size > 1024 * 1024) {
+                    reject(new Error("La imagen excede el límite de 1MB. Por favor, comprímala o use un enlace."));
+                    return;
+                }
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = (error) => reject(error);
+            });
+        }
+
+        /** Formats a number as currency (USD). */
+        function formatCurrency(amount) {
+            const isNegative = amount < 0;
+            const colorClass = !isNegative ? 'text-green-600' : 'text-red-600';
+            const sign = !isNegative ? '+' : '';
+            return `<span class="${colorClass}">${sign}$${Math.abs(amount).toFixed(2)}</span>`;
+        }
+        
+        /** Shows a temporary message box. */
+        function showMessage(text, isError = false) {
+            messageText.textContent = text;
+            if (isError) {
+                document.getElementById('spinner').classList.add('hidden');
+                messageCloseButton.classList.remove('hidden');
+                messageText.classList.add('text-red-600');
+            } else {
+                document.getElementById('spinner').classList.remove('hidden');
+                messageCloseButton.classList.add('hidden');
+                messageText.classList.remove('text-red-600');
+            }
+            messageBox.classList.remove('hidden');
+        }
+
+        /** Hides the message box. */
+        function hideMessage() {
+            messageBox.classList.add('hidden');
+        }
+
+        /** Toggles between the Plan/List view and the Execution view. */
+        function toggleExecutionView(tradeId = null, tradeData = null) {
+            currentExecutionTradeId = tradeId;
+
+            if (tradeId) {
+                // Switch to Execution View
+                premarketForm.classList.add('hidden');
+                executionSection.classList.remove('hidden');
+
+                // Pre-fill header info
+                executingTradeAsset.textContent = tradeData.plan.asset;
+                executingTradeDate.textContent = new Date(tradeData.plan.date).toLocaleDateString('es-ES');
+                
+                // Clear execution form for new trade
+                executionForm.reset();
+                execProfitLossContainer.classList.add('hidden');
+            } else {
+                // Switch back to Plan/List View
+                premarketForm.classList.remove('hidden');
+                executionSection.classList.add('hidden');
+            }
+        }
+        
+        document.getElementById('cancelExecutionButton').addEventListener('click', () => toggleExecutionView(null));
+
+        // --- Firebase Initialization and Auth ---
+
+        /** Initializes Firebase app and authenticates the user. */
+        async function initializeFirebase() {
+            setLogLevel('debug');
+            if (Object.keys(FIREBASE_CONFIG).length === 0) {
+                userIdDisplay.textContent = 'ERROR: No Config';
+                return;
+            }
+
+            try {
+                const app = initial
